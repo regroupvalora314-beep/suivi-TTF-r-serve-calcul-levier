@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Gaz Naturel & Stocks UE (TTF, AGSI+ & Simulateur Levier)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        },
+                        darkbg: '#0b0f17',
+                        darkcard: '#161e2e',
+                        darkborder: '#243044'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(22, 30, 46, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .light .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(156, 163, 175, 0.5); }
+    </style>
+</head>
+<body class="bg-darkbg text-slate-100 transition-colors duration-200 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 w-full border-b border-slate-800 bg-slate-900/90 backdrop-blur">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Title -->
+                <div class="flex items-center gap-3">
+                    <div class="bg-gradient-to-tr from-amber-500 to-orange-600 p-2.5 rounded-xl shadow-lg shadow-orange-500/20">
+                        <i class="fa-solid font-bold fa-fire-flame-curved text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                            Market Gas Tracker UE
+                        </h1>
+                        <p class="text-xs text-slate-400 hidden sm:block">Cotations TTF, Stocks AGSI+ & Simulateur Levier x3</p>
+                    </div>
+                </div>
+
+                <!-- Desktop Nav Tabs -->
+                <nav class="hidden lg:flex space-x-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
+                    <button onclick="switchTab('overview')" id="tab-overview" class="tab-btn px-3.5 py-2 text-xs font-medium rounded-lg transition-all duration-150 bg-amber-500 text-white shadow">
+                        <i class="fa-solid fa-chart-pie mr-1.5"></i>Vue d'ensemble
+                    </button>
+                    <button onclick="switchTab('ttf')" id="tab-ttf" class="tab-btn px-3.5 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-150">
+                        <i class="fa-solid fa-chart-line mr-1.5"></i>Indice TTF
+                    </button>
+                    <button onclick="switchTab('agsi')" id="tab-agsi" class="tab-btn px-3.5 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-150">
+                        <i class="fa-solid fa-database mr-1.5"></i>Stocks AGSI+
+                    </button>
+                    <button onclick="switchTab('simulator')" id="tab-simulator" class="tab-btn px-3.5 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-150">
+                        <i class="fa-solid fa-sliders mr-1.5"></i>Simulateur Stocks
+                    </button>
+                    <button onclick="switchTab('leverage')" id="tab-leverage" class="tab-btn px-3.5 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-150">
+                        <i class="fa-solid fa-bolt text-amber-400 mr-1.5"></i>Simulateur Levier x3
+                    </button>
+                </nav>
+
+                <!-- Right Actions -->
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Marché Actif
+                    </span>
+                    
+                    <button onclick="toggleDarkMode()" class="p-2 text-slate-400 hover:text-white rounded-lg border border-slate-700 bg-slate-800/50 hover:bg-slate-700 transition" title="Basculer Thème">
+                        <i id="theme-icon" class="fa-solid fa-sun text-amber-400"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Tabs -->
+        <div class="lg:hidden border-t border-slate-800 bg-slate-900/95 px-2 py-2 flex justify-around text-[11px] overflow-x-auto">
+            <button onclick="switchTab('overview')" id="mtab-overview" class="flex flex-col items-center py-1 px-2 text-amber-400 font-semibold">
+                <i class="fa-solid fa-chart-pie text-sm mb-0.5"></i>Vue globale
+            </button>
+            <button onclick="switchTab('ttf')" id="mtab-ttf" class="flex flex-col items-center py-1 px-2 text-slate-400">
+                <i class="fa-solid fa-chart-line text-sm mb-0.5"></i>TTF
+            </button>
+            <button onclick="switchTab('agsi')" id="mtab-agsi" class="flex flex-col items-center py-1 px-2 text-slate-400">
+                <i class="fa-solid fa-database text-sm mb-0.5"></i>Stocks
+            </button>
+            <button onclick="switchTab('simulator')" id="mtab-simulator" class="flex flex-col items-center py-1 px-2 text-slate-400">
+                <i class="fa-solid fa-sliders text-sm mb-0.5"></i>Stocks Hiver
+            </button>
+            <button onclick="switchTab('leverage')" id="mtab-leverage" class="flex flex-col items-center py-1 px-2 text-amber-400">
+                <i class="fa-solid fa-bolt text-sm mb-0.5"></i>Levier x3
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Banner Source Verification -->
+        <div class="bg-gradient-to-r from-slate-800 to-slate-900 border border-slate-700/80 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20">
+                    <i class="fa-solid fa-circle-info text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-sm font-semibold text-slate-200">Sources officielles de données intégrées</h2>
+                    <p class="text-xs text-slate-400">Cotations TTF, Niveaux AGSI+ & Simulateur d'Analyse Financière Levier x3</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+                <a href="https://fr.tradingeconomics.com/commodity/eu-natural-gas" target="_blank" rel="noopener noreferrer" 
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 hover:text-white transition">
+                   <i class="fa-solid fa-arrow-up-right-from-square text-amber-400"></i> Trading Economics (TTF)
+                </a>
+                <a href="https://agsi.gie.eu/" target="_blank" rel="noopener noreferrer" 
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 hover:text-white transition">
+                   <i class="fa-solid fa-arrow-up-right-from-square text-emerald-400"></i> AGSI+ GIE Platform
+                </a>
+            </div>
+        </div>
+
+        <!-- ================= PAGE 1: OVERVIEW ================= -->
+        <div id="section-overview" class="tab-content space-y-6">
+
+            <!-- Top Key Metrics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- Card 1: Dutch TTF Gas -->
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 hover:border-amber-500/40 transition duration-200 shadow-lg relative overflow-hidden group">
+                    <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/5 rounded-full blur-xl group-hover:bg-amber-500/10 transition"></div>
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-xs font-semibold tracking-wider text-slate-400 uppercase">Gaz Naturel EU (TTF)</span>
+                        <span class="inline-flex items-center text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <i class="fa-solid fa-caret-down mr-1"></i>-1.00%
+                        </span>
+                    </div>
+                    <div class="flex items-baseline justify-between mb-2">
+                        <div class="text-3xl font-extrabold text-white">78.06 <span class="text-base font-medium text-slate-400">EUR/MWh</span></div>
+                    </div>
+                    <div class="text-xs text-slate-400 space-y-1">
+                        <div class="flex justify-between">
+                            <span>Range du jour:</span>
+                            <span class="text-slate-200 font-medium">77.50 - 80.08</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Prévision 12m:</span>
+                            <span class="text-amber-400 font-medium">94.81 EUR/MWh</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: EU Overall Reserves -->
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 hover:border-blue-500/40 transition duration-200 shadow-lg relative overflow-hidden group">
+                    <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-blue-500/5 rounded-full blur-xl group-hover:bg-blue-500/10 transition"></div>
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-semibold tracking-wider text-slate-400 uppercase">Stockage Total UE</span>
+                        <i class="fa-solid fa-earth-europe text-blue-400 text-lg"></i>
+                    </div>
+                    <div class="flex items-baseline justify-between mb-2">
+                        <div class="text-3xl font-extrabold text-blue-400">73.0 %</div>
+                        <span class="text-xs text-slate-400">~826 / 1 132 TWh</span>
+                    </div>
+                    <div class="w-full bg-slate-700/70 rounded-full h-2.5 mb-2 overflow-hidden">
+                        <div class="bg-gradient-to-r from-blue-600 to-cyan-400 h-2.5 rounded-full" style="width: 73%"></div>
+                    </div>
+                    <p class="text-xs text-slate-400">Capacité globale sécurisée pour l'hiver.</p>
+                </div>
+
+                <!-- Card 3: Germany Reserves -->
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 hover:border-emerald-500/40 transition duration-200 shadow-lg relative overflow-hidden group">
+                    <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/10 transition"></div>
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-semibold tracking-wider text-slate-400 uppercase">Réserves Allemagne (DE)</span>
+                        <span class="text-lg">🇩🇪</span>
+                    </div>
+                    <div class="flex items-baseline justify-between mb-2">
+                        <div class="text-3xl font-extrabold text-amber-400">58.7 %</div>
+                        <span class="text-xs text-slate-400">~145 / 247.5 TWh</span>
+                    </div>
+                    <div class="w-full bg-slate-700/70 rounded-full h-2.5 mb-2 overflow-hidden">
+                        <div class="bg-gradient-to-r from-amber-500 to-amber-300 h-2.5 rounded-full" style="width: 58.7%"></div>
+                    </div>
+                    <p class="text-xs text-slate-400">1ère capacité de stockage en volume en Europe.</p>
+                </div>
+
+                <!-- Card 4: Quick Short x3 Simulation Link -->
+                <div class="bg-gradient-to-br from-slate-800 to-amber-950/40 border border-amber-500/40 rounded-2xl p-5 hover:border-amber-400 transition duration-200 shadow-lg relative overflow-hidden group cursor-pointer" onclick="switchTab('leverage')">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold tracking-wider text-amber-400 uppercase"><i class="fa-solid fa-bolt mr-1"></i> Vente Levier x3 à 35€</span>
+                        <span class="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30">Simulateur</span>
+                    </div>
+                    <div class="text-2xl font-black text-rose-400 mb-1" id="overviewShortPnLVal">
+                        -144.18 € <span class="text-xs font-medium text-slate-300">(Perte)</span>
+                    </div>
+                    <p class="text-[11px] text-slate-300">Basé sur le cours spot actuel (78.06 €/MWh) et -15€ de frais.</p>
+                    <div class="mt-3 text-xs text-amber-400 font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                        Ouvrir le calculateur détaillé <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Main Grid Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- TTF Price Evolution Chart (2 cols) -->
+                <div class="lg:col-span-2 bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 shadow-xl flex flex-col">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                        <div>
+                            <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-area text-amber-500"></i>
+                                Évolution de l'Indice TTF (EUR/MWh)
+                            </h3>
+                            <p class="text-xs text-slate-400">Historique récent & Projection à court/moyen terme</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-400">Vue:</span>
+                            <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30">30J + Projections</span>
+                        </div>
+                    </div>
+                    <div class="relative flex-grow min-h-[300px]">
+                        <canvas id="overviewTTFChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Storage Comparison Chart (1 col) -->
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 shadow-xl flex flex-col">
+                    <div class="mb-4">
+                        <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                            <i class="fa-solid fa-chart-column text-emerald-500"></i>
+                            Réserves par Pays (% Remplissage)
+                        </h3>
+                        <p class="text-xs text-slate-400">Données issues de la plateforme AGSI+ GIE</p>
+                    </div>
+                    <div class="relative flex-grow min-h-[300px]">
+                        <canvas id="overviewStorageChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Table Preview -->
+            <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-white text-base flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-blue-400"></i>
+                        Aperçu Récapitulatif des Stocks Nationaux
+                    </h3>
+                    <button onclick="switchTab('agsi')" class="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 font-medium">
+                        Voir tous les pays <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="text-xs text-slate-400 uppercase bg-slate-900/60 border-b border-slate-700">
+                            <tr>
+                                <th class="py-3 px-4">Pays / Zone</th>
+                                <th class="py-3 px-4">Taux de Remplissage</th>
+                                <th class="py-3 px-4">Volume Stocké (TWh)</th>
+                                <th class="py-3 px-4">Capacité Totale (TWh)</th>
+                                <th class="py-3 px-4">Statut Sécurité</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700/60">
+                            <tr class="hover:bg-slate-700/30">
+                                <td class="py-3 px-4 font-semibold flex items-center gap-2"><span>🇪🇺</span> Union Européenne (Moyenne)</td>
+                                <td class="py-3 px-4"><span class="font-bold text-blue-400">73.0 %</span></td>
+                                <td class="py-3 px-4">826.4 TWh</td>
+                                <td class="py-3 px-4">1,132 TWh</td>
+                                <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Optimal</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/30">
+                                <td class="py-3 px-4 font-semibold flex items-center gap-2"><span>🇵🇱</span> Pologne</td>
+                                <td class="py-3 px-4"><span class="font-bold text-emerald-400">98.8 %</span></td>
+                                <td class="py-3 px-4">36.0 TWh</td>
+                                <td class="py-3 px-4">36.4 TWh</td>
+                                <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Très Élevé</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/30">
+                                <td class="py-3 px-4 font-semibold flex items-center gap-2"><span>🇮🇹</span> Italie</td>
+                                <td class="py-3 px-4"><span class="font-bold text-emerald-400">86.0 %</span></td>
+                                <td class="py-3 px-4">170.2 TWh</td>
+                                <td class="py-3 px-4">197.9 TWh</td>
+                                <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Optimal</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/30">
+                                <td class="py-3 px-4 font-semibold flex items-center gap-2"><span>🇫🇷</span> France</td>
+                                <td class="py-3 px-4"><span class="font-bold text-emerald-400">81.1 %</span></td>
+                                <td class="py-3 px-4">107.0 TWh</td>
+                                <td class="py-3 px-4">131.9 TWh</td>
+                                <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Optimal</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-700/30">
+                                <td class="py-3 px-4 font-semibold flex items-center gap-2"><span>🇩🇪</span> Allemagne</td>
+                                <td class="py-3 px-4"><span class="font-bold text-amber-400">58.7 %</span></td>
+                                <td class="py-3 px-4">145.2 TWh</td>
+                                <td class="py-3 px-4">247.5 TWh</td>
+                                <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20">Sous Surveillance</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= PAGE 2: INDICE TTF ================= -->
+        <div id="section-ttf" class="tab-content hidden space-y-6">
+            
+            <!-- TTF Header Banner -->
+            <div class="bg-gradient-to-r from-amber-900/30 via-slate-800 to-slate-800 border border-amber-500/30 rounded-2xl p-6 shadow-xl">
+                <div class="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">Référence Européenne</span>
+                            <span class="text-xs text-slate-400">Dutch TTF Natural Gas Futures</span>
+                        </div>
+                        <h2 class="text-2xl font-black text-white mt-1">Indice Gaz Naturel EU (TTF)</h2>
+                        <p class="text-xs text-slate-300 mt-1 max-w-2xl">
+                            Le contrat Title Transfer Facility (TTF) basé aux Pays-Bas sert de référence principale pour la tarification du gaz naturel sur le marché européen.
+                        </p>
+                    </div>
+                    <div class="bg-slate-900/80 border border-slate-700 p-4 rounded-xl text-right min-w-[200px]">
+                        <span class="text-xs text-slate-400 block uppercase">Prix de Clôture / Spot</span>
+                        <div class="text-3xl font-black text-amber-400">78.06 <span class="text-sm font-normal text-slate-300">EUR/MWh</span></div>
+                        <span class="text-xs text-emerald-400 font-semibold"><i class="fa-solid fa-arrow-down"></i> -1.00% (-0.79 EUR)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Range Metric Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-xl p-4">
+                    <span class="text-xs text-slate-400 block mb-1">Range Journalier</span>
+                    <div class="text-lg font-bold text-white">77.50 - 80.08 <span class="text-xs font-normal text-slate-400">EUR</span></div>
+                    <div class="w-full bg-slate-700 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div class="bg-amber-400 h-1.5 rounded-full" style="width: 35%"></div>
+                    </div>
+                </div>
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-xl p-4">
+                    <span class="text-xs text-slate-400 block mb-1">Range 52 Semaines</span>
+                    <div class="text-lg font-bold text-white">26.55 - 83.78 <span class="text-xs font-normal text-slate-400">EUR</span></div>
+                    <div class="w-full bg-slate-700 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div class="bg-amber-500 h-1.5 rounded-full" style="width: 89%"></div>
+                    </div>
+                </div>
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-xl p-4">
+                    <span class="text-xs text-slate-400 block mb-1">Prévision Fin de Trimestre</span>
+                    <div class="text-lg font-bold text-amber-300">79.28 <span class="text-xs font-normal text-slate-400">EUR/MWh</span></div>
+                    <p class="text-[10px] text-slate-400 mt-1">Est. Trading Economics</p>
+                </div>
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-xl p-4">
+                    <span class="text-xs text-slate-400 block mb-1">Prévision Horizon 12 Mois</span>
+                    <div class="text-lg font-bold text-orange-400">94.81 <span class="text-xs font-normal text-slate-400">EUR/MWh</span></div>
+                    <p class="text-[10px] text-slate-400 mt-1">Tendance haussière sur pression hivernale</p>
+                </div>
+            </div>
+
+            <!-- Full TTF Interactive Chart -->
+            <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-6 shadow-xl">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Graphique de Tendance TTF & Projections Analytiques</h3>
+                        <p class="text-xs text-slate-400">Courbe historique des prix spot et couloir d'estimation des analystes</p>
+                    </div>
+                </div>
+                <div class="relative min-h-[350px]">
+                    <canvas id="detailTTFChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Analytical Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 shadow-lg">
+                    <h4 class="font-bold text-white text-sm mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
+                        Facteurs d'Influence Majeurs du Prix TTF
+                    </h4>
+                    <ul class="text-xs text-slate-300 space-y-2.5">
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-angle-right text-amber-400 mt-0.5"></i>
+                            <span><strong>Demande Saisonnière :</strong> L'arrivée des températures hivernales augmente significativement les prélèvements.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-angle-right text-amber-400 mt-0.5"></i>
+                            <span><strong>Apports GNL :</strong> Disponibilité des cargaisons de Gaz Naturel Liquéfié en provenance des USA et du Moyen-Orient.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-angle-right text-amber-400 mt-0.5"></i>
+                            <span><strong>Flux de Gazoducs :</strong> Stabilité des livraisons résiduelles via les pipelines norvégiens et nord-africains.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 shadow-lg">
+                    <h4 class="font-bold text-white text-sm mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-bullseye text-blue-400"></i>
+                        Analyse du Consensus & Projections
+                    </h4>
+                    <p class="text-xs text-slate-300 leading-relaxed mb-3">
+                        Les analystes anticipent un maintien des cours au-dessus de 75 EUR/MWh à court terme. La trajectoire cible de <strong class="text-amber-400">94.81 EUR/MWh à 12 mois</strong> reflète la reconstitution nécessaire des stocks pour les cycles suivants.
+                    </p>
+                    <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-700/50 flex justify-between items-center text-xs">
+                        <span class="text-slate-400">Source données marché:</span>
+                        <a href="https://fr.tradingeconomics.com/commodity/eu-natural-gas" target="_blank" class="text-amber-400 font-semibold hover:underline">
+                            Trading Economics <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= PAGE 3: STOCKS AGSI+ ================= -->
+        <div id="section-agsi" class="tab-content hidden space-y-6">
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-800/80 border border-slate-700/70 p-6 rounded-2xl shadow-xl">
+                <div>
+                    <h2 class="text-2xl font-black text-white">Réserves & Stocks de Gaz AGSI+ (GIE)</h2>
+                    <p class="text-xs text-slate-400 mt-1">Suivi exhaustif des niveaux d'inventaire de gaz naturel dans les installations de stockage souterrain UE.</p>
+                </div>
+                <!-- Search Controls -->
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <div class="relative w-full md:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="storageSearch" oninput="filterStorageTable()" placeholder="Rechercher un pays..." 
+                               class="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Storage Grid Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 shadow-xl">
+                    <h3 class="font-bold text-white text-base mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-bar text-cyan-400"></i>
+                        Capacité Totale vs Volume Actuel Stocké (TWh)
+                    </h3>
+                    <div class="relative min-h-[280px]">
+                        <canvas id="agsiVolumeChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 shadow-xl">
+                    <h3 class="font-bold text-white text-base mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-percent text-emerald-400"></i>
+                        Taux de Remplissage par Pays-Clé (%)
+                    </h3>
+                    <div class="relative min-h-[280px]">
+                        <canvas id="agsiPercentageChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comprehensive Storage Table -->
+            <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 shadow-xl">
+                <h3 class="font-bold text-white text-base mb-4">Détail des Inventaires de Stockage par État Membre</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm" id="agsiTable">
+                        <thead class="text-xs text-slate-400 uppercase bg-slate-900/80 border-b border-slate-700">
+                            <tr>
+                                <th class="py-3 px-4">Pays / Entité</th>
+                                <th class="py-3 px-4">Niveau de Remplissage</th>
+                                <th class="py-3 px-4">Barre de Progression</th>
+                                <th class="py-3 px-4">Gaz en Stock (TWh)</th>
+                                <th class="py-3 px-4">Capacité Max (TWh)</th>
+                                <th class="py-3 px-4">Évaluation</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700/60" id="agsiTableBody">
+                            <!-- JS injected rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= PAGE 4: SIMULATEUR STOCKS ================= -->
+        <div id="section-simulator" class="tab-content hidden space-y-6">
+            
+            <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-6 shadow-xl">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
+                        <i class="fa-solid fa-calculator text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Simulateur d'Épuisement des Stocks Hivernaux</h2>
+                        <p class="text-xs text-slate-400">Modélisez la durée d'autonomie des réserves de gaz en fonction des rigueurs climatiques.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Controls Panel -->
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 shadow-xl space-y-5">
+                    <h3 class="font-bold text-white text-sm border-b border-slate-700 pb-2">Paramètres de Simulation</h3>
+
+                    <!-- Region Selector -->
+                    <div>
+                        <label class="text-xs font-semibold text-slate-300 block mb-1.5">Zone d'étude :</label>
+                        <select id="simRegion" onchange="runSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                            <option value="EU">Union Européenne (826 TWh actuels)</option>
+                            <option value="DE">Allemagne (145 TWh actuels)</option>
+                            <option value="FR">France (107 TWh actuels)</option>
+                            <option value="IT">Italie (170 TWh actuels)</option>
+                        </select>
+                    </div>
+
+                    <!-- Temperature Drop Scenario -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-semibold text-slate-300">Intensité Hivernale :</label>
+                            <span id="tempLabel" class="text-xs font-bold text-amber-400">Hiver Normal (0°C)</span>
+                        </div>
+                        <input type="range" id="simTemp" min="-10" max="10" value="0" step="1" oninput="runSimulation()" 
+                               class="w-full accent-amber-500 cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>Vague de Froid (-10°C)</span>
+                            <span>Doux (+10°C)</span>
+                        </div>
+                    </div>
+
+                    <!-- Daily Consumption Draw Rate -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-semibold text-slate-300">Taux de Soutirage Journalier :</label>
+                            <span id="drawLabel" class="text-xs font-bold text-cyan-400">100% (Standard)</span>
+                        </div>
+                        <input type="range" id="simDraw" min="50" max="180" value="100" step="5" oninput="runSimulation()" 
+                               class="w-full accent-cyan-500 cursor-pointer">
+                    </div>
+
+                    <!-- Import LNG Contribution -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-semibold text-slate-300">Maintien des Apports GNL/Pipeline :</label>
+                            <span id="importLabel" class="text-xs font-bold text-emerald-400">80% du flux normal</span>
+                        </div>
+                        <input type="range" id="simImport" min="0" max="100" value="80" step="5" oninput="runSimulation()" 
+                               class="w-full accent-emerald-500 cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- Results & Chart Panel -->
+                <div class="lg:col-span-2 bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-white text-base mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-amber-400"></i>
+                            Trajectoire d'Épuisement Estimée
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                            <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+                                <span class="text-[11px] text-slate-400 block">Autonomie Estimée</span>
+                                <div id="simDaysResult" class="text-2xl font-extrabold text-amber-400">-- Jours</div>
+                            </div>
+                            <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+                                <span class="text-[11px] text-slate-400 block">Date Seuil Bas</span>
+                                <div id="simDateResult" class="text-xl font-bold text-white">-- / -- / ----</div>
+                            </div>
+                            <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700">
+                                <span class="text-[11px] text-slate-400 block">Niveau Stock de Fin</span>
+                                <div id="simEndLevelResult" class="text-xl font-bold text-emerald-400">-- %</div>
+                            </div>
+                        </div>
+
+                        <div class="relative min-h-[260px]">
+                            <canvas id="simChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= PAGE 5: SIMULATEUR LEVIER X3 (NEW) ================= -->
+        <div id="section-leverage" class="tab-content hidden space-y-6">
+            
+            <!-- Header Banner -->
+            <div class="bg-gradient-to-r from-slate-900 via-amber-950/40 to-slate-900 border border-amber-500/30 rounded-2xl p-6 shadow-xl">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                <i class="fa-solid fa-bolt mr-1"></i>Analyse Financière en Temps Réel
+                            </span>
+                            <span class="text-xs text-slate-400">Formule mathématique configurée</span>
+                        </div>
+                        <h2 class="text-2xl font-black text-white">Simulateur PnL : Vente à Découvert Levier x3</h2>
+                        <p class="text-xs text-slate-300 mt-1 max-w-3xl">
+                            Équation simulée : <code class="px-2 py-1 bg-slate-950 text-amber-400 rounded font-mono font-bold border border-slate-800">Résultat (€) = (P_vente - P_actuel) × Volume × Levier - Frais</code>
+                        </p>
+                    </div>
+
+                    <!-- Formula Highlight Card -->
+                    <div class="bg-slate-950/80 border border-slate-800 p-3.5 rounded-xl text-xs space-y-1 w-full md:w-auto min-w-[240px]">
+                        <div class="text-slate-400 font-medium">Formule active :</div>
+                        <div class="text-amber-300 font-mono text-sm font-bold">
+                            Perte/Gain = (35€ - P) × 1MWh × 3 - 15€
+                        </div>
+                        <div class="text-[10px] text-slate-500">Où P = Prix de marché TTF en temps réel</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Interactive Simulator Controls and Real-time Cards -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Control Panel Card (1 Column) -->
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 shadow-xl space-y-5">
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                        <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-amber-400"></i>
+                            Variables d'Entrée du Modèle
+                        </h3>
+                        <button onclick="resetLeverageDefaults()" class="text-[11px] text-slate-400 hover:text-amber-400 transition underline">
+                            Réinitialiser (35€ / -15€)
+                        </button>
+                    </div>
+
+                    <!-- Type Position Switcher -->
+                    <div>
+                        <label class="text-xs font-semibold text-slate-300 block mb-2">Sens de la Position :</label>
+                        <div class="grid grid-cols-2 gap-2 p-1 bg-slate-900 rounded-xl border border-slate-700">
+                            <button id="btnShort" onclick="setPositionType('short')" class="py-1.5 text-xs font-bold rounded-lg bg-rose-500 text-white shadow">
+                                <i class="fa-solid fa-arrow-down-long mr-1"></i>Vente (Short)
+                            </button>
+                            <button id="btnLong" onclick="setPositionType('long')" class="py-1.5 text-xs font-medium text-slate-400 hover:text-white rounded-lg">
+                                <i class="fa-solid fa-arrow-up-long mr-1"></i>Achat (Long)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Initial Sell Price (35 € default) -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-semibold text-slate-300">Prix d'Entrée (P_vente) :</label>
+                            <span id="pEntryValueDisplay" class="text-xs font-bold text-amber-400">35.00 € / MWh</span>
+                        </div>
+                        <input type="range" id="pEntrySlider" min="10" max="100" value="35" step="0.5" oninput="updateLeverageCalc()" 
+                               class="w-full accent-amber-500 cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                            <span>10 €</span>
+                            <span class="text-amber-400 font-bold">35 € (Référence)</span>
+                            <span>100 €</span>
+                        </div>
+                    </div>
+
+                    <!-- Current Market Price (TTF) Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-semibold text-slate-300">Prix Actuel TTF (P_marché) :</label>
+                            <span id="pMarketValueDisplay" class="text-xs font-bold text-cyan-400">78.06 € / MWh</span>
+                        </div>
+                        <input type="range" id="pMarketSlider" min="10" max="120" value="78.06" step="0.5" oninput="updateLeverageCalc()" 
+                               class="w-full accent-cyan-500 cursor-pointer">
+                        <div class="flex justify-between items-center mt-1">
+                            <button onclick="setMarketPriceToSpot()" class="text-[10px] bg-slate-900 text-amber-400 hover:text-amber-300 px-2 py-0.5 rounded border border-slate-700">
+                                Prédéfini : Spot TTF Actuel (78.06€)
+                            </button>
+                            <button onclick="setMarketPrice(35.0)" class="text-[10px] bg-slate-900 text-slate-300 hover:text-white px-2 py-0.5 rounded border border-slate-700">
+                                Parité (35€)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Volume MWh -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-semibold text-slate-300">Volume Contractuel :</label>
+                            <span id="volumeValueDisplay" class="text-xs font-bold text-purple-400">1 MWh</span>
+                        </div>
+                        <input type="range" id="volumeSlider" min="1" max="500" value="1" step="1" oninput="updateLeverageCalc()" 
+                               class="w-full accent-purple-500 cursor-pointer">
+                    </div>
+
+                    <!-- Fixed Fees (-15€ default) -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-semibold text-slate-300">Frais Fixes / Ajustement :</label>
+                            <span id="feeValueDisplay" class="text-xs font-bold text-rose-400">-15.00 €</span>
+                        </div>
+                        <input type="range" id="feeSlider" min="0" max="100" value="15" step="1" oninput="updateLeverageCalc()" 
+                               class="w-full accent-rose-500 cursor-pointer">
+                    </div>
+
+                    <!-- Leverage Factor (x3 default) -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-semibold text-slate-300">Effet de Levier :</label>
+                            <span id="leverageValueDisplay" class="text-xs font-bold text-amber-400">x3</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-1">
+                            <button onclick="setLeverage(1)" class="lev-btn text-xs py-1 rounded bg-slate-900 text-slate-400 border border-slate-700">x1</button>
+                            <button onclick="setLeverage(2)" class="lev-btn text-xs py-1 rounded bg-slate-900 text-slate-400 border border-slate-700">x2</button>
+                            <button onclick="setLeverage(3)" class="lev-btn text-xs py-1 font-bold rounded bg-amber-500 text-white border border-amber-400">x3</button>
+                            <button onclick="setLeverage(5)" class="lev-btn text-xs py-1 rounded bg-slate-900 text-slate-400 border border-slate-700">x5</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Output & Interactive Scenarios (2 Columns) -->
+                <div class="lg:col-span-2 space-y-6">
+
+                    <!-- PnL Result Headline Panel -->
+                    <div id="pnlCardContainer" class="p-6 rounded-2xl border shadow-xl transition-all duration-300 bg-rose-950/30 border-rose-500/40">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Résultat Financier Net (PnL)</span>
+                                <div id="pnlResultEuro" class="text-4xl font-black text-rose-400">
+                                    -144.18 €
+                                </div>
+                                <div id="pnlResultPercent" class="text-sm font-semibold text-rose-300 mt-1">
+                                    Rendement : -137.31% sur capital engagé
+                                </div>
+                            </div>
+
+                            <!-- Visual Status Badge -->
+                            <div class="text-right">
+                                <div id="pnlStatusBadge" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                                    <i class="fa-solid fa-circle-down"></i> PERTE NETTE
+                                </div>
+                                <div id="breakevenPriceText" class="text-xs text-slate-400 mt-2">
+                                    Seuil de rentabilité (Break-even) : <span class="text-amber-400 font-bold">30.00 €/MWh</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mathematical Decomposition Steps -->
+                        <div class="mt-5 pt-4 border-t border-slate-700/60 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                            <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                                <span class="text-slate-400 block mb-0.5">1. Écart de Prix Unitaire :</span>
+                                <span id="calcStep1" class="font-mono text-white font-semibold">35€ - 78.06€ = -43.06 €</span>
+                            </div>
+                            <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                                <span class="text-slate-400 block mb-0.5">2. Amplification Levier x3 :</span>
+                                <span id="calcStep2" class="font-mono text-amber-300 font-semibold">-43.06€ × 3 = -129.18 €</span>
+                            </div>
+                            <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                                <span class="text-slate-400 block mb-0.5">3. Frais Fixes Déduits :</span>
+                                <span id="calcStep3" class="font-mono text-rose-400 font-semibold">-129.18€ - 15€ = -144.18 €</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sensitivity Chart PnL vs Price -->
+                    <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 shadow-xl">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="font-bold text-white text-base flex items-center gap-2">
+                                    <i class="fa-solid fa-chart-line text-amber-400"></i>
+                                    Courbe de PnL en fonction du prix du TTF
+                                </h3>
+                                <p class="text-xs text-slate-400">Analyse de sensibilité : Zone de Gain (Verte) vs Zone de Perte (Rouge)</p>
+                            </div>
+                            <span class="text-xs bg-slate-900 px-2.5 py-1 rounded text-slate-300 border border-slate-700">
+                                Axe X: Prix TTF (€)
+                            </span>
+                        </div>
+                        <div class="relative min-h-[280px]">
+                            <canvas id="pnlChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Educational Risk Warning -->
+                    <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-4 flex items-start gap-3 text-xs text-slate-300">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-400 text-lg mt-0.5"></i>
+                        <div>
+                            <strong class="text-white block mb-0.5">Note sur la Vente à Découvert (Short) et l'Effet de Levier :</strong>
+                            Lors d'une vente à découvert sur le marché gazier (ex: vente à 35 €/MWh), vous gagnez si le cours baisse mais vous subissez une perte si le cours augmente. L'effet de levier (x3) multiplie par 3 les variations du cours TTF. Les frais fixes (-15 €) réduisent le point d'équilibre qui se situe ici à <strong>30.00 €/MWh</strong> (pour 1 MWh à levier x3).
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto border-t border-slate-800 bg-slate-900/80 text-xs text-slate-400 py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-fire-flame-curved text-amber-500"></i>
+                <span class="font-semibold text-slate-300">Market Gas Tracker UE</span>
+                <span>— Modélisation des cours du gaz & réserves stratégiques.</span>
+            </div>
+            <div class="flex items-center gap-4 text-slate-400">
+                <a href="https://fr.tradingeconomics.com/commodity/eu-natural-gas" target="_blank" class="hover:text-amber-400 transition">Trading Economics</a>
+                <span>•</span>
+                <a href="https://agsi.gie.eu/" target="_blank" class="hover:text-emerald-400 transition">AGSI+ GIE</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        /* Datasets Definition */
+        const AGSI_DATA = [
+            { code: 'EU', country: 'Union Européenne', flag: '🇪🇺', level: 73.0, volume: 826.4, capacity: 1132.0, status: 'Optimal' },
+            { code: 'PL', country: 'Pologne', flag: '🇵🇱', level: 98.8, volume: 36.0, capacity: 36.4, status: 'Très Élevé' },
+            { code: 'IT', country: 'Italie', flag: '🇮🇹', level: 86.0, volume: 170.2, capacity: 197.9, status: 'Optimal' },
+            { code: 'FR', country: 'France', flag: '🇫🇷', level: 81.1, volume: 107.0, capacity: 131.9, status: 'Optimal' },
+            { code: 'DE', country: 'Allemagne', flag: '🇩🇪', level: 58.7, volume: 145.2, capacity: 247.5, status: 'Sous Surveillance' },
+            { code: 'NL', country: 'Pays-Bas', flag: '🇳🇱', level: 56.3, volume: 79.9, capacity: 141.9, status: 'Moyen' },
+            { code: 'AT', country: 'Autriche', flag: '🇦🇹', level: 74.5, volume: 72.3, capacity: 97.0, status: 'Optimal' },
+            { code: 'CZ', country: 'Tchéquie', flag: '🇨🇿', level: 78.2, volume: 27.0, capacity: 34.5, status: 'Optimal' }
+        ];
+
+        // Historical + Forecast TTF Price Simulation
+        const generateTTFData = () => {
+            const labels = [];
+            const prices = [];
+            const forecast = [];
+            
+            let currentPrice = 75.0;
+            for(let i = 30; i >= 1; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                labels.push(date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }));
+                
+                const diff = (Math.random() - 0.48) * 2;
+                currentPrice += diff;
+                prices.push(parseFloat(currentPrice.toFixed(2)));
+                forecast.push(null);
+            }
+
+            labels.push('Aujourd\'hui');
+            prices.push(78.06);
+            forecast.push(78.06);
+
+            let fPrice = 78.06;
+            for(let i = 1; i <= 15; i++) {
+                labels.push(`M+${i}`);
+                fPrice += 0.55 + (Math.random() * 0.3);
+                prices.push(null);
+                forecast.push(parseFloat(fPrice.toFixed(2)));
+            }
+
+            return { labels, prices, forecast };
+        };
+
+        const ttfDataSet = generateTTFData();
+
+        /* Global Simulator State */
+        let leverageState = {
+            positionType: 'short', // 'short' or 'long'
+            pEntry: 35.0,
+            pMarket: 78.06,
+            volume: 1,
+            fee: 15.0,
+            leverage: 3
+        };
+
+        /* Charts Dynamic References */
+        let overviewTTFChartObj, overviewStorageChartObj, detailTTFChartObj, agsiVolChartObj, agsiPercChartObj, simChartObj, pnlChartObj;
+
+        /* Init Page */
+        window.onload = function() {
+            initOverviewCharts();
+            initAGSICharts();
+            populateAGSITable();
+            runSimulation();
+            initPnLChart();
+            updateLeverageCalc();
+        };
+
+        function initOverviewCharts() {
+            const ctxTTF = document.getElementById('overviewTTFChart').getContext('2d');
+            overviewTTFChartObj = new Chart(ctxTTF, {
+                type: 'line',
+                data: {
+                    labels: ttfDataSet.labels,
+                    datasets: [
+                        {
+                            label: 'Prix Historique TTF (EUR/MWh)',
+                            data: ttfDataSet.prices,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 2,
+                            pointRadius: 2
+                        },
+                        {
+                            label: 'Tendance Prévisionnelle',
+                            data: ttfDataSet.forecast,
+                            borderColor: '#f97316',
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.3,
+                            borderWidth: 2,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8', font: { size: 11 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' } },
+                        y: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' }, suggestedMin: 60, suggestedMax: 100 }
+                    }
+                }
+            });
+
+            const ctxStorage = document.getElementById('overviewStorageChart').getContext('2d');
+            overviewStorageChartObj = new Chart(ctxStorage, {
+                type: 'bar',
+                data: {
+                    labels: AGSI_DATA.map(d => d.code),
+                    datasets: [{
+                        label: '% Remplissage',
+                        data: AGSI_DATA.map(d => d.level),
+                        backgroundColor: AGSI_DATA.map(d => d.level > 75 ? 'rgba(34, 197, 94, 0.8)' : d.level > 60 ? 'rgba(59, 130, 246, 0.8)' : 'rgba(245, 158, 11, 0.8)'),
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+                        y: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' }, max: 100 }
+                    }
+                }
+            });
+        }
+
+        function initAGSICharts() {
+            const ctxVol = document.getElementById('agsiVolumeChart').getContext('2d');
+            agsiVolChartObj = new Chart(ctxVol, {
+                type: 'bar',
+                data: {
+                    labels: AGSI_DATA.map(d => d.country),
+                    datasets: [
+                        {
+                            label: 'Volume Actuel (TWh)',
+                            data: AGSI_DATA.map(d => d.volume),
+                            backgroundColor: 'rgba(56, 189, 248, 0.85)',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Capacité Totale (TWh)',
+                            data: AGSI_DATA.map(d => d.capacity),
+                            backgroundColor: 'rgba(51, 65, 85, 0.6)',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+                        y: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' } }
+                    }
+                }
+            });
+
+            const ctxPerc = document.getElementById('agsiPercentageChart').getContext('2d');
+            agsiPercChartObj = new Chart(ctxPerc, {
+                type: 'bar',
+                data: {
+                    labels: AGSI_DATA.map(d => d.country),
+                    datasets: [{
+                        label: 'Remplissage %',
+                        data: AGSI_DATA.map(d => d.level),
+                        backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' }, max: 100 },
+                        y: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-amber-500', 'text-white', 'shadow');
+                btn.classList.add('text-slate-400');
+            });
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-amber-500', 'text-white', 'shadow');
+                activeBtn.classList.remove('text-slate-400');
+            }
+
+            if(tabId === 'ttf' && !detailTTFChartObj) {
+                setTimeout(renderDetailTTFChart, 100);
+            }
+            if(tabId === 'leverage' && pnlChartObj) {
+                setTimeout(() => pnlChartObj.update(), 100);
+            }
+        }
+
+        function renderDetailTTFChart() {
+            const ctxDetail = document.getElementById('detailTTFChart').getContext('2d');
+            detailTTFChartObj = new Chart(ctxDetail, {
+                type: 'line',
+                data: {
+                    labels: ttfDataSet.labels,
+                    datasets: [
+                        {
+                            label: 'Cotation Réelle (EUR/MWh)',
+                            data: ttfDataSet.prices,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            fill: true,
+                            tension: 0.2
+                        },
+                        {
+                            label: 'Trajectoire Cible Analysts (94.81 EUR/MWh)',
+                            data: ttfDataSet.forecast,
+                            borderColor: '#38bdf8',
+                            borderDash: [6, 6],
+                            tension: 0.2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#cbd5e1' } } },
+                    scales: {
+                        x: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' } },
+                        y: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' } }
+                    }
+                }
+            });
+        }
+
+        function populateAGSITable() {
+            const tbody = document.getElementById('agsiTableBody');
+            tbody.innerHTML = '';
+            
+            AGSI_DATA.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-700/30 transition';
+                
+                let badgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                if(row.level < 60) badgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4 font-semibold flex items-center gap-2">
+                        <span class="text-lg">${row.flag}</span> ${row.country}
+                    </td>
+                    <td class="py-3.5 px-4 font-bold ${row.level > 70 ? 'text-emerald-400' : 'text-amber-400'}">${row.level.toFixed(1)} %</td>
+                    <td class="py-3.5 px-4 w-48">
+                        <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+                            <div class="${row.level > 70 ? 'bg-emerald-400' : 'bg-amber-400'} h-2 rounded-full" style="width: ${row.level}%"></div>
+                        </div>
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-200">${row.volume} TWh</td>
+                    <td class="py-3.5 px-4 text-slate-400">${row.capacity} TWh</td>
+                    <td class="py-3.5 px-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-medium border ${badgeClass}">
+                            ${row.status}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterStorageTable() {
+            const query = document.getElementById('storageSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#agsiTableBody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function runSimulation() {
+            const regionCode = document.getElementById('simRegion').value;
+            const tempModifier = parseInt(document.getElementById('simTemp').value);
+            const drawRate = parseInt(document.getElementById('simDraw').value) / 100;
+            const importRate = parseInt(document.getElementById('simImport').value) / 100;
+
+            document.getElementById('tempLabel').innerText = tempModifier < 0 ? `Vague de froid (${tempModifier}°C)` : tempModifier > 0 ? `Doux (+${tempModifier}°C)` : 'Hiver Normal (0°C)';
+            document.getElementById('drawLabel').innerText = `${Math.round(drawRate * 100)}% de demande`;
+            document.getElementById('importLabel').innerText = `${Math.round(importRate * 100)}% d'apports entrants`;
+
+            const regionData = AGSI_DATA.find(d => d.code === regionCode) || AGSI_DATA[0];
+            let currentVol = regionData.volume;
+            const maxCap = regionData.capacity;
+
+            const baseDailyDraw = (maxCap * 0.005) * drawRate * (1 - (tempModifier * 0.04));
+            const baseDailyImport = (maxCap * 0.002) * importRate;
+
+            const labels = [];
+            const simValues = [];
+            let criticalDay = null;
+
+            for(let day = 0; day <= 90; day++) {
+                labels.push(`J+${day}`);
+                const perc = Math.max(0, (currentVol / maxCap) * 100);
+                simValues.push(parseFloat(perc.toFixed(1)));
+
+                if(perc <= 15 && criticalDay === null) {
+                    criticalDay = day;
+                }
+
+                const netChange = baseDailyImport - baseDailyDraw;
+                currentVol = Math.max(0, currentVol + netChange);
+            }
+
+            document.getElementById('simDaysResult').innerText = criticalDay !== null ? `${criticalDay} Jours` : '> 90 Jours';
+            
+            const targetDate = new Date();
+            targetDate.setDate(targetDate.getDate() + (criticalDay || 90));
+            document.getElementById('simDateResult').innerText = targetDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            
+            const finalPerc = simValues[simValues.length - 1];
+            document.getElementById('simEndLevelResult').innerText = `${finalPerc}%`;
+
+            if(!simChartObj) {
+                const ctxSim = document.getElementById('simChart').getContext('2d');
+                simChartObj = new Chart(ctxSim, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Remplissage Réserve (%)',
+                            data: simValues,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' } },
+                            y: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' }, min: 0, max: 100 }
+                        }
+                    }
+                });
+            } else {
+                simChartObj.data.labels = labels;
+                simChartObj.data.datasets[0].data = simValues;
+                simChartObj.update();
+            }
+        }
+
+        /* ================= LEVERAGE CALCULATOR LOGIC ================= */
+        function setPositionType(type) {
+            leverageState.positionType = type;
+            const btnShort = document.getElementById('btnShort');
+            const btnLong = document.getElementById('btnLong');
+
+            if(type === 'short') {
+                btnShort.className = "py-1.5 text-xs font-bold rounded-lg bg-rose-500 text-white shadow";
+                btnLong.className = "py-1.5 text-xs font-medium text-slate-400 hover:text-white rounded-lg";
+            } else {
+                btnLong.className = "py-1.5 text-xs font-bold rounded-lg bg-emerald-500 text-white shadow";
+                btnShort.className = "py-1.5 text-xs font-medium text-slate-400 hover:text-white rounded-lg";
+            }
+            updateLeverageCalc();
+        }
+
+        function setLeverage(lev) {
+            leverageState.leverage = lev;
+            document.querySelectorAll('.lev-btn').forEach(btn => {
+                btn.className = "lev-btn text-xs py-1 rounded bg-slate-900 text-slate-400 border border-slate-700";
+            });
+            event.target.className = "lev-btn text-xs py-1 font-bold rounded bg-amber-500 text-white border border-amber-400";
+            updateLeverageCalc();
+        }
+
+        function setMarketPriceToSpot() {
+            document.getElementById('pMarketSlider').value = 78.06;
+            updateLeverageCalc();
+        }
+
+        function setMarketPrice(val) {
+            document.getElementById('pMarketSlider').value = val;
+            updateLeverageCalc();
+        }
+
+        function resetLeverageDefaults() {
+            document.getElementById('pEntrySlider').value = 35.0;
+            document.getElementById('pMarketSlider').value = 78.06;
+            document.getElementById('volumeSlider').value = 1;
+            document.getElementById('feeSlider').value = 15;
+            leverageState.positionType = 'short';
+            setPositionType('short');
+        }
+
+        function updateLeverageCalc() {
+            // Read UI inputs
+            leverageState.pEntry = parseFloat(document.getElementById('pEntrySlider').value);
+            leverageState.pMarket = parseFloat(document.getElementById('pMarketSlider').value);
+            leverageState.volume = parseFloat(document.getElementById('volumeSlider').value);
+            leverageState.fee = parseFloat(document.getElementById('feeSlider').value);
+
+            // UI Displays
+            document.getElementById('pEntryValueDisplay').innerText = `${leverageState.pEntry.toFixed(2)} € / MWh`;
+            document.getElementById('pMarketValueDisplay').innerText = `${leverageState.pMarket.toFixed(2)} € / MWh`;
+            document.getElementById('volumeValueDisplay').innerText = `${leverageState.volume} MWh`;
+            document.getElementById('feeValueDisplay').innerText = `-${leverageState.fee.toFixed(2)} €`;
+            document.getElementById('leverageValueDisplay').innerText = `x${leverageState.leverage}`;
+
+            // Core Formula Calculation:
+            // For Short: (pEntry - pMarket) * volume * leverage - fee
+            // For Long: (pMarket - pEntry) * volume * leverage - fee
+            const rawDiff = leverageState.positionType === 'short' 
+                ? (leverageState.pEntry - leverageState.pMarket)
+                : (leverageState.pMarket - leverageState.pEntry);
+
+            const leveragedGross = rawDiff * leverageState.volume * leverageState.leverage;
+            const netPnL = leveragedGross - leverageState.fee;
+
+            // Margin base approximation for percentage calculation
+            const marginBase = (leverageState.pEntry * leverageState.volume);
+            const returnPercent = (netPnL / marginBase) * 100;
+
+            // Break-even calculation
+            // (pEntry - P_break) * lev - fee = 0 => P_break = pEntry - (fee / (volume * lev))
+            const breakEvenPrice = leverageState.positionType === 'short'
+                ? leverageState.pEntry - (leverageState.fee / (leverageState.volume * leverageState.leverage))
+                : leverageState.pEntry + (leverageState.fee / (leverageState.volume * leverageState.leverage));
+
+            // UI Updates
+            const container = document.getElementById('pnlCardContainer');
+            const resultEuroEl = document.getElementById('pnlResultEuro');
+            const resultPercentEl = document.getElementById('pnlResultPercent');
+            const badgeEl = document.getElementById('pnlStatusBadge');
+
+            resultEuroEl.innerText = `${netPnL >= 0 ? '+' : ''}${netPnL.toFixed(2)} €`;
+            resultPercentEl.innerText = `Rendement estimé : ${returnPercent >= 0 ? '+' : ''}${returnPercent.toFixed(2)}% sur capital de référence (${marginBase.toFixed(2)}€)`;
+            document.getElementById('breakevenPriceText').innerHTML = `Seuil de rentabilité (Break-even) : <span class="text-amber-400 font-bold">${breakEvenPrice.toFixed(2)} €/MWh</span>`;
+
+            // Step decomposition update
+            document.getElementById('calcStep1').innerText = `${leverageState.pEntry.toFixed(2)}€ - ${leverageState.pMarket.toFixed(2)}€ = ${rawDiff.toFixed(2)} €`;
+            document.getElementById('calcStep2').innerText = `${rawDiff.toFixed(2)}€ × ${leverageState.volume}MWh × x${leverageState.leverage} = ${leveragedGross.toFixed(2)} €`;
+            document.getElementById('calcStep3').innerText = `${leveragedGross.toFixed(2)}€ - ${leverageState.fee.toFixed(2)}€ = ${netPnL.toFixed(2)} €`;
+
+            if(netPnL >= 0) {
+                container.className = "p-6 rounded-2xl border shadow-xl transition-all duration-300 bg-emerald-950/30 border-emerald-500/40";
+                resultEuroEl.className = "text-4xl font-black text-emerald-400";
+                resultPercentEl.className = "text-sm font-semibold text-emerald-300 mt-1";
+                badgeEl.className = "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+                badgeEl.innerHTML = `<i class="fa-solid fa-circle-up"></i> GAIN NET (+${netPnL.toFixed(2)} €)`;
+            } else {
+                container.className = "p-6 rounded-2xl border shadow-xl transition-all duration-300 bg-rose-950/30 border-rose-500/40";
+                resultEuroEl.className = "text-4xl font-black text-rose-400";
+                resultPercentEl.className = "text-sm font-semibold text-rose-300 mt-1";
+                badgeEl.className = "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40";
+                badgeEl.innerHTML = `<i class="fa-solid fa-circle-down"></i> PERTE NETTE (${netPnL.toFixed(2)} €)`;
+            }
+
+            // Sync with Overview Card preview
+            const overviewValEl = document.getElementById('overviewShortPnLVal');
+            if(overviewValEl) {
+                overviewValEl.innerText = `${netPnL.toFixed(2)} €`;
+            }
+
+            // Update Sensitivity Chart
+            updatePnLChart();
+        }
+
+        function initPnLChart() {
+            const ctx = document.getElementById('pnlChart').getContext('2d');
+            pnlChartObj = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'PnL Net (€)',
+                            data: [],
+                            borderColor: '#38bdf8',
+                            borderWidth: 3,
+                            fill: false,
+                            tension: 0.1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Point Actuel',
+                            data: [],
+                            borderColor: '#f59e0b',
+                            backgroundColor: '#f59e0b',
+                            pointRadius: 7,
+                            showLine: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `PnL Net: ${context.parsed.y.toFixed(2)} €`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            title: { display: true, text: 'Prix du TTF sur le marché (€/MWh)', color: '#64748b' },
+                            ticks: { color: '#64748b' }, 
+                            grid: { color: '#1e293b' } 
+                        },
+                        y: { 
+                            title: { display: true, text: 'Gain / Perte Net (€)', color: '#64748b' },
+                            ticks: { color: '#64748b' }, 
+                            grid: { color: '#1e293b' } 
+                        }
+                    }
+                }
+            });
+        }
+
+        function updatePnLChart() {
+            if(!pnlChartObj) return;
+
+            const pricePoints = [];
+            const pnlPoints = [];
+            const currentPoint = [];
+
+            const minP = 10;
+            const maxP = 90;
+            const step = 2;
+
+            for(let p = minP; p <= maxP; p += step) {
+                pricePoints.push(`${p}€`);
+                const diff = leverageState.positionType === 'short' ? (leverageState.pEntry - p) : (p - leverageState.pEntry);
+                const pnl = (diff * leverageState.volume * leverageState.leverage) - leverageState.fee;
+                pnlPoints.push(parseFloat(pnl.toFixed(2)));
+
+                // Check closest point to current selected market price
+                if(Math.abs(p - leverageState.pMarket) < step / 2) {
+                    currentPoint.push({ x: `${p}€`, y: pnl });
+                } else {
+                    currentPoint.push(null);
+                }
+            }
+
+            pnlChartObj.data.labels = pricePoints;
+            pnlChartObj.data.datasets[0].data = pnlPoints;
+            pnlChartObj.data.datasets[1].data = currentPoint;
+            pnlChartObj.update();
+        }
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const themeIcon = document.getElementById('theme-icon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+            }
+        }
+    </script>
+</body>
+</html>

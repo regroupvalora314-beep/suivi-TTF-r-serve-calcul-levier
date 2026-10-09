@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Gaz Naturel & Stocks UE (TTF, AGSI+ & Simulateur Levier)</title>
+    <title>Dashboard Gaz Naturel & Stocks UE (TTF, AGSI+, Levier & Météo)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -66,25 +66,28 @@
                         <h1 class="text-lg sm:text-xl font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
                             Market Gas Tracker UE
                         </h1>
-                        <p class="text-xs text-slate-400 hidden sm:block">Cotations TTF, Stocks AGSI+ & Simulateur Levier x3</p>
+                        <p class="text-xs text-slate-400 hidden sm:block">Cotations TTF, Stocks AGSI+, Simulateur Levier & Météo</p>
                     </div>
                 </div>
 
                 <!-- Desktop Nav Tabs -->
                 <nav class="hidden lg:flex space-x-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
-                    <button onclick="switchTab('overview')" id="tab-overview" class="tab-btn px-3.5 py-2 text-xs font-medium rounded-lg transition-all duration-150 bg-amber-500 text-white shadow">
+                    <button onclick="switchTab('overview')" id="tab-overview" class="tab-btn px-3 py-2 text-xs font-medium rounded-lg transition-all duration-150 bg-amber-500 text-white shadow">
                         <i class="fa-solid fa-chart-pie mr-1.5"></i>Vue d'ensemble
                     </button>
-                    <button onclick="switchTab('ttf')" id="tab-ttf" class="tab-btn px-3.5 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-150">
+                    <button onclick="switchTab('ttf')" id="tab-ttf" class="tab-btn px-3 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-150">
                         <i class="fa-solid fa-chart-line mr-1.5"></i>Indice TTF
                     </button>
-                    <button onclick="switchTab('agsi')" id="tab-agsi" class="tab-btn px-3.5 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-150">
+                    <button onclick="switchTab('agsi')" id="tab-agsi" class="tab-btn px-3 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-150">
                         <i class="fa-solid fa-database mr-1.5"></i>Stocks AGSI+
                     </button>
-                    <button onclick="switchTab('simulator')" id="tab-simulator" class="tab-btn px-3.5 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-150">
+                    <button onclick="switchTab('weather')" id="tab-weather" class="tab-btn px-3 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-150">
+                        <i class="fa-solid fa-cloud-sun text-cyan-400 mr-1.5"></i>Météo FR/DE (10J)
+                    </button>
+                    <button onclick="switchTab('simulator')" id="tab-simulator" class="tab-btn px-3 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-150">
                         <i class="fa-solid fa-sliders mr-1.5"></i>Simulateur Stocks
                     </button>
-                    <button onclick="switchTab('leverage')" id="tab-leverage" class="tab-btn px-3.5 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-150">
+                    <button onclick="switchTab('leverage')" id="tab-leverage" class="tab-btn px-3 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-150">
                         <i class="fa-solid fa-bolt text-amber-400 mr-1.5"></i>Simulateur Levier x3
                     </button>
                 </nav>
@@ -104,20 +107,23 @@
         </div>
 
         <!-- Mobile Navigation Tabs -->
-        <div class="lg:hidden border-t border-slate-800 bg-slate-900/95 px-2 py-2 flex justify-around text-[11px] overflow-x-auto">
-            <button onclick="switchTab('overview')" id="mtab-overview" class="flex flex-col items-center py-1 px-2 text-amber-400 font-semibold">
+        <div class="lg:hidden border-t border-slate-800 bg-slate-900/95 px-2 py-2 flex justify-between text-[11px] overflow-x-auto gap-1">
+            <button onclick="switchTab('overview')" id="mtab-overview" class="flex flex-col items-center py-1 px-2 text-amber-400 font-semibold whitespace-nowrap">
                 <i class="fa-solid fa-chart-pie text-sm mb-0.5"></i>Vue globale
             </button>
-            <button onclick="switchTab('ttf')" id="mtab-ttf" class="flex flex-col items-center py-1 px-2 text-slate-400">
+            <button onclick="switchTab('ttf')" id="mtab-ttf" class="flex flex-col items-center py-1 px-2 text-slate-400 whitespace-nowrap">
                 <i class="fa-solid fa-chart-line text-sm mb-0.5"></i>TTF
             </button>
-            <button onclick="switchTab('agsi')" id="mtab-agsi" class="flex flex-col items-center py-1 px-2 text-slate-400">
+            <button onclick="switchTab('agsi')" id="mtab-agsi" class="flex flex-col items-center py-1 px-2 text-slate-400 whitespace-nowrap">
                 <i class="fa-solid fa-database text-sm mb-0.5"></i>Stocks
             </button>
-            <button onclick="switchTab('simulator')" id="mtab-simulator" class="flex flex-col items-center py-1 px-2 text-slate-400">
-                <i class="fa-solid fa-sliders text-sm mb-0.5"></i>Stocks Hiver
+            <button onclick="switchTab('weather')" id="mtab-weather" class="flex flex-col items-center py-1 px-2 text-cyan-400 whitespace-nowrap">
+                <i class="fa-solid fa-cloud-sun text-sm mb-0.5"></i>Météo 10J
             </button>
-            <button onclick="switchTab('leverage')" id="mtab-leverage" class="flex flex-col items-center py-1 px-2 text-amber-400">
+            <button onclick="switchTab('simulator')" id="mtab-simulator" class="flex flex-col items-center py-1 px-2 text-slate-400 whitespace-nowrap">
+                <i class="fa-solid fa-sliders text-sm mb-0.5"></i>Simu Hiver
+            </button>
+            <button onclick="switchTab('leverage')" id="mtab-leverage" class="flex flex-col items-center py-1 px-2 text-amber-400 whitespace-nowrap">
                 <i class="fa-solid fa-bolt text-sm mb-0.5"></i>Levier x3
             </button>
         </div>
@@ -132,8 +138,8 @@
                     <i class="fa-solid fa-circle-info text-xl"></i>
                 </div>
                 <div>
-                    <h2 class="text-sm font-semibold text-slate-200">Sources officielles de données intégrées</h2>
-                    <p class="text-xs text-slate-400">Cotations TTF, Niveaux AGSI+ & Simulateur d'Analyse Financière Levier x3</p>
+                    <h2 class="text-sm font-semibold text-slate-200">Sources de données & Prévisions Météorologiques à 10 Jours</h2>
+                    <p class="text-xs text-slate-400">Cotations TTF, Niveaux AGSI+, Météo FR/DE & Analyse Financière Levier x3</p>
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2 text-xs">
@@ -195,21 +201,26 @@
                     <p class="text-xs text-slate-400">Capacité globale sécurisée pour l'hiver.</p>
                 </div>
 
-                <!-- Card 3: Germany Reserves -->
-                <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 hover:border-emerald-500/40 transition duration-200 shadow-lg relative overflow-hidden group">
-                    <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/10 transition"></div>
+                <!-- Card 3: 10-Day Weather Summary -->
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 hover:border-cyan-500/40 transition duration-200 shadow-lg relative overflow-hidden group cursor-pointer" onclick="switchTab('weather')">
                     <div class="flex justify-between items-start mb-2">
-                        <span class="text-xs font-semibold tracking-wider text-slate-400 uppercase">Réserves Allemagne (DE)</span>
-                        <span class="text-lg">🇩🇪</span>
+                        <span class="text-xs font-semibold tracking-wider text-slate-400 uppercase">T° Moyenne (10 Jours)</span>
+                        <i class="fa-solid fa-cloud-sun-rain text-cyan-400 text-lg"></i>
                     </div>
-                    <div class="flex items-baseline justify-between mb-2">
-                        <div class="text-3xl font-extrabold text-amber-400">58.7 %</div>
-                        <span class="text-xs text-slate-400">~145 / 247.5 TWh</span>
+                    <div class="grid grid-cols-2 gap-2 my-1">
+                        <div>
+                            <span class="text-[10px] text-slate-400 block">🇫🇷 France</span>
+                            <span class="text-xl font-bold text-cyan-300">15.0 °C</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 block">🇩🇪 Allemagne</span>
+                            <span class="text-xl font-bold text-cyan-400">12.1 °C</span>
+                        </div>
                     </div>
-                    <div class="w-full bg-slate-700/70 rounded-full h-2.5 mb-2 overflow-hidden">
-                        <div class="bg-gradient-to-r from-amber-500 to-amber-300 h-2.5 rounded-full" style="width: 58.7%"></div>
-                    </div>
-                    <p class="text-xs text-slate-400">1ère capacité de stockage en volume en Europe.</p>
+                    <p class="text-[11px] text-slate-300 mt-2 flex items-center justify-between">
+                        <span>Impact sur demande : <strong class="text-emerald-400">Modéré</strong></span>
+                        <i class="fa-solid fa-arrow-right text-xs text-cyan-400 group-hover:translate-x-1 transition-transform"></i>
+                    </p>
                 </div>
 
                 <!-- Card 4: Quick Short x3 Simulation Link -->
@@ -502,7 +513,134 @@
 
         </div>
 
-        <!-- ================= PAGE 4: SIMULATEUR STOCKS ================= -->
+        <!-- ================= PAGE 4: WEATHER FORECAST 10 DAYS (NEW) ================= -->
+        <div id="section-weather" class="tab-content hidden space-y-6">
+
+            <!-- Weather Banner -->
+            <div class="bg-gradient-to-r from-slate-900 via-cyan-950/40 to-slate-900 border border-cyan-500/30 rounded-2xl p-6 shadow-xl">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                                <i class="fa-solid fa-cloud-sun-rain mr-1"></i>Prévisions Météorologiques & Chauffage
+                            </span>
+                            <span class="text-xs text-slate-400">Horizon 10 Jours</span>
+                        </div>
+                        <h2 class="text-2xl font-black text-white">Météo & Stress de Consommation de Gaz (FR / DE)</h2>
+                        <p class="text-xs text-slate-300 mt-1 max-w-3xl">
+                            Les températures journalières déterminent le niveau des Degrés Jours Unifiés (DJU / HDD), directement corrélés à la consommation de chauffage domestique et industriel.
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl text-center min-w-[120px]">
+                            <span class="text-[10px] text-slate-400 block uppercase">DJU Total 10J FR</span>
+                            <span class="text-xl font-extrabold text-cyan-400">30.0 DJU</span>
+                            <span class="text-[10px] text-emerald-400 block">Chauffage faible</span>
+                        </div>
+                        <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl text-center min-w-[120px]">
+                            <span class="text-[10px] text-slate-400 block uppercase">DJU Total 10J DE</span>
+                            <span class="text-xl font-extrabold text-amber-400">59.0 DJU</span>
+                            <span class="text-[10px] text-amber-400 block">+12% Demande</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather Chart vs HDD Demand -->
+            <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-6 shadow-xl">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                    <div>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-temperature-three-quarters text-cyan-400"></i>
+                            Trajectoire des Températures Moyennes Journalières (°C)
+                        </h3>
+                        <p class="text-xs text-slate-400">Comparatif France vs Allemagne par rapport au seuil de chauffage (18°C)</p>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-cyan-400 inline-block"></span> France (°C)</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span> Allemagne (°C)</span>
+                    </div>
+                </div>
+                <div class="relative min-h-[320px]">
+                    <canvas id="weather10DayChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed 10-Day Daily Breakdown Table -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- 10-Day Table (2 cols) -->
+                <div class="lg:col-span-2 bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 shadow-xl">
+                    <h3 class="font-bold text-white text-base mb-4 flex items-center justify-between">
+                        <span>Tableau Détaillé des Températures & DJU (10 Jours)</span>
+                        <span class="text-xs font-normal text-slate-400">Seuil de référence : 18°C</span>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="text-slate-400 uppercase bg-slate-900/80 border-b border-slate-700">
+                                <tr>
+                                    <th class="py-2.5 px-3">Jour</th>
+                                    <th class="py-2.5 px-3">Météo FR</th>
+                                    <th class="py-2.5 px-3">T° Moy FR</th>
+                                    <th class="py-2.5 px-3">DJU FR</th>
+                                    <th class="py-2.5 px-3 border-l border-slate-700">Météo DE</th>
+                                    <th class="py-2.5 px-3">T° Moy DE</th>
+                                    <th class="py-2.5 px-3">DJU DE</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-700/60" id="weatherTableBody">
+                                <!-- JS Injected Weather Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Explanatory Panel (1 col) -->
+                <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-5 shadow-xl space-y-4">
+                    <h3 class="font-bold text-white text-base border-b border-slate-700 pb-2">
+                        <i class="fa-solid fa-gauge-high text-cyan-400 mr-2"></i>
+                        Impact sur la Consommation de Gaz
+                    </h3>
+
+                    <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">🇫🇷</span>
+                            <div>
+                                <h4 class="font-bold text-white text-xs">France : Climat Doux</h4>
+                                <p class="text-[11px] text-slate-400">Moyenne 10J : <strong class="text-cyan-300">15.0°C</strong></p>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-300">
+                            Les températures restent supérieures aux normales saisonnières. La consommation de chauffage reste modérée, permettant un faible taux de soutirage sur les stocks français.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">🇩🇪</span>
+                            <div>
+                                <h4 class="font-bold text-white text-xs">Allemagne : Rafraîchissement Progressive</h4>
+                                <p class="text-[11px] text-slate-400">Moyenne 10J : <strong class="text-amber-400">12.1°C</strong></p>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-300">
+                            Baisse marquée à partir de J+5 ($9.0^\circ\text{C}$). Augmentation attendue du chauffage urbain et de la demande électrique à base de gaz.
+                        </p>
+                    </div>
+
+                    <div class="p-3 bg-cyan-950/30 border border-cyan-500/30 rounded-xl text-[11px] text-cyan-200">
+                        <i class="fa-solid fa-lightbulb text-amber-400 mr-1"></i>
+                        <strong>Rappel Formule DJU :</strong>
+                        <br>$\text{DJU} = \max(0, 18.0 - T_\text{moyenne})$. Plus le total des DJU est élevé, plus les tirages sur les réserves stratégiques s'accélèrent.
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ================= PAGE 5: SIMULATEUR STOCKS ================= -->
         <div id="section-simulator" class="tab-content hidden space-y-6">
             
             <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-6 shadow-xl">
@@ -600,7 +738,7 @@
 
         </div>
 
-        <!-- ================= PAGE 5: SIMULATEUR LEVIER X3 (NEW) ================= -->
+        <!-- ================= PAGE 6: SIMULATEUR LEVIER X3 ================= -->
         <div id="section-leverage" class="tab-content hidden space-y-6">
             
             <!-- Header Banner -->
@@ -835,6 +973,20 @@
             { code: 'CZ', country: 'Tchéquie', flag: '🇨🇿', level: 78.2, volume: 27.0, capacity: 34.5, status: 'Optimal' }
         ];
 
+        // 10-Day Weather Forecast Data (France & Germany)
+        const WEATHER_10DAY_DATA = [
+            { day: 'J+1 (Demain)', frIcon: 'fa-sun text-amber-400', frTmin: 12, frTmax: 18.5, frDesc: 'Ensoleillé', deIcon: 'fa-cloud-sun text-slate-300', deTmin: 9, deTmax: 15, deDesc: 'Éclaircies' },
+            { day: 'J+2', frIcon: 'fa-cloud-sun text-slate-300', frTmin: 13, frTmax: 19, frDesc: 'Passages nuageux', deIcon: 'fa-cloud text-slate-400', deTmin: 8, deTmax: 14, deDesc: 'Couvert' },
+            { day: 'J+3', frIcon: 'fa-cloud-rain text-cyan-400', frTmin: 11, frTmax: 16.5, frDesc: 'Pluie modérée', deIcon: 'fa-cloud-showers-heavy text-blue-400', deTmin: 7, deTmax: 12.5, deDesc: 'Averses' },
+            { day: 'J+4', frIcon: 'fa-cloud-sun text-amber-400', frTmin: 10, frTmax: 17, frDesc: 'Variables', deIcon: 'fa-wind text-slate-300', deTmin: 6, deTmax: 12, deDesc: 'Venté' },
+            { day: 'J+5', frIcon: 'fa-sun text-amber-400', frTmin: 9.5, frTmax: 16, frDesc: 'Beau temps', deIcon: 'fa-snowflake text-cyan-300', deTmin: 4, deTmax: 9.5, deDesc: 'Frais / Gelées' },
+            { day: 'J+6', frIcon: 'fa-cloud text-slate-400', frTmin: 8, frTmax: 14.5, frDesc: 'Nuageux', deIcon: 'fa-cloud-rain text-cyan-400', deTmin: 5, deTmax: 10, deDesc: 'Pluie faible' },
+            { day: 'J+7', frIcon: 'fa-cloud-sun text-amber-300', frTmin: 9, frTmax: 15.5, frDesc: 'Éclaircies', deIcon: 'fa-cloud text-slate-400', deTmin: 6, deTmax: 11.5, deDesc: 'Grisaille' },
+            { day: 'J+8', frIcon: 'fa-cloud-rain text-cyan-400', frTmin: 10, frTmax: 15, frDesc: 'Pluies', deIcon: 'fa-cloud-showers-heavy text-blue-400', deTmin: 5.5, deTmax: 10.5, deDesc: 'Pluvieux' },
+            { day: 'J+9', frIcon: 'fa-cloud-sun text-slate-300', frTmin: 8.5, frTmax: 14, frDesc: 'Variable', deIcon: 'fa-wind text-slate-300', deTmin: 4.5, deTmax: 9, deDesc: 'Vent frais' },
+            { day: 'J+10', frIcon: 'fa-sun text-amber-400', frTmin: 7, frTmax: 13.5, frDesc: 'Frais & Dégagé', deIcon: 'fa-snowflake text-cyan-300', deTmin: 3, deTmax: 8.5, deDesc: 'Froid sec' }
+        ];
+
         // Historical + Forecast TTF Price Simulation
         const generateTTFData = () => {
             const labels = [];
@@ -881,13 +1033,14 @@
         };
 
         /* Charts Dynamic References */
-        let overviewTTFChartObj, overviewStorageChartObj, detailTTFChartObj, agsiVolChartObj, agsiPercChartObj, simChartObj, pnlChartObj;
+        let overviewTTFChartObj, overviewStorageChartObj, detailTTFChartObj, agsiVolChartObj, agsiPercChartObj, weather10DayChartObj, simChartObj, pnlChartObj;
 
         /* Init Page */
         window.onload = function() {
             initOverviewCharts();
             initAGSICharts();
             populateAGSITable();
+            populateWeatherTable();
             runSimulation();
             initPnLChart();
             updateLeverageCalc();
@@ -1016,6 +1169,102 @@
             });
         }
 
+        function renderWeatherChart() {
+            if (weather10DayChartObj) return;
+
+            const ctxW = document.getElementById('weather10DayChart').getContext('2d');
+            const labels = WEATHER_10DAY_DATA.map(d => d.day);
+            const frAvgTemp = WEATHER_10DAY_DATA.map(d => (d.frTmin + d.frTmax) / 2);
+            const deAvgTemp = WEATHER_10DAY_DATA.map(d => (d.deTmin + d.deTmax) / 2);
+            const thresholdLine = Array(10).fill(18);
+
+            weather10DayChartObj = new Chart(ctxW, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'France (°C Moy)',
+                            data: frAvgTemp,
+                            borderColor: '#38bdf8',
+                            backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 3,
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Allemagne (°C Moy)',
+                            data: deAvgTemp,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 3,
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Seuil de Chauffage (18°C)',
+                            data: thresholdLine,
+                            borderColor: '#ef4444',
+                            borderDash: [4, 4],
+                            fill: false,
+                            pointRadius: 0,
+                            borderWidth: 1.5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#cbd5e1' } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+                        y: { 
+                            title: { display: true, text: 'Température (°C)', color: '#64748b' },
+                            ticks: { color: '#64748b' }, 
+                            grid: { color: '#1e293b' },
+                            suggestedMin: 0,
+                            suggestedMax: 22
+                        }
+                    }
+                }
+            });
+        }
+
+        function populateWeatherTable() {
+            const tbody = document.getElementById('weatherTableBody');
+            tbody.innerHTML = '';
+
+            WEATHER_10DAY_DATA.forEach(row => {
+                const frAvg = (row.frTmin + row.frTmax) / 2;
+                const deAvg = (row.deTmin + row.deTmax) / 2;
+
+                const frHdd = Math.max(0, 18 - frAvg).toFixed(1);
+                const deHdd = Math.max(0, 18 - deAvg).toFixed(1);
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-700/30 transition';
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-semibold text-slate-200">${row.day}</td>
+                    <td class="py-2.5 px-3 text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid ${row.frIcon}"></i> <span>${row.frDesc}</span>
+                    </td>
+                    <td class="py-2.5 px-3 font-bold text-cyan-300">${frAvg.toFixed(1)} °C <span class="text-[10px] text-slate-400 font-normal">(${row.frTmin}° / ${row.frTmax}°)</span></td>
+                    <td class="py-2.5 px-3 font-mono ${frHdd > 5 ? 'text-amber-400' : 'text-slate-400'}">${frHdd}</td>
+                    
+                    <td class="py-2.5 px-3 text-slate-300 border-l border-slate-700 flex items-center gap-1.5">
+                        <i class="fa-solid ${row.deIcon}"></i> <span>${row.deDesc}</span>
+                    </td>
+                    <td class="py-2.5 px-3 font-bold text-amber-400">${deAvg.toFixed(1)} °C <span class="text-[10px] text-slate-400 font-normal">(${row.deTmin}° / ${row.deTmax}°)</span></td>
+                    <td class="py-2.5 px-3 font-mono ${deHdd > 5 ? 'text-amber-400 font-bold' : 'text-slate-400'}">${deHdd}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(`section-${tabId}`).classList.remove('hidden');
@@ -1030,6 +1279,9 @@
                 activeBtn.classList.remove('text-slate-400');
             }
 
+            if(tabId === 'weather') {
+                setTimeout(renderWeatherChart, 100);
+            }
             if(tabId === 'ttf' && !detailTTFChartObj) {
                 setTimeout(renderDetailTTFChart, 100);
             }
